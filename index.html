@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Graph</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; }
+    #graph { width: 100vw; height: 80vh; border: 1px solid #ccc; }
+    #controls { padding: 10px; }
+    button { padding: 5px 10px; margin-right: 10px; }
+    textarea { width: 100%; height: 100px; box-sizing: border-box; }
+  </style>
+  <script src="./vis-network.min.js"></script>
+</head>
+<body>
+  <div id="controls">
+    <label for="graphType">Graph Type:</label>
+    <select id="graphType">
+      <option value="undirectional" selected>Undirectional</option>
+      <option value="directional">Directional</option>
+    </select>
+
+    <label for="dataType">Data Type:</label>
+    <select id="dataType">
+      <option value="edges" selected>Edges Array</option>
+      <option value="adjacency">Adjacency Array</option>
+    </select>
+
+    <br><br>
+
+    <label for="graphData">Graph Data:</label>
+    <textarea id="graphData">[[1,2],[1,3],[1,4],[2,4]]</textarea>
+
+    <br><br>
+
+    <button id="drawBtn">Draw Graph</button>
+    <button id="resetBtn">Reset Layout</button>
+  </div>
+  <div id="graph"></div>
+
+  <script>
+    let network;
+
+    const edgesPlaceholder = '[[1,2],[1,3],[1,4],[2,4]]';
+    const adjacencyPlaceholder = '[[], [2,3,4],[1,4],[1],[1,2]]';
+    const graphDataTextArea = document.getElementById('graphData');
+
+    document.getElementById('dataType').addEventListener('change', function() {
+      if (this.value === 'edges') {
+        graphDataTextArea.value = edgesPlaceholder;
+      } else {
+        graphDataTextArea.value = adjacencyPlaceholder;
+      }
+    });
+
+    function drawGraph() {
+      const graphType = document.getElementById('graphType').value;
+      const dataType = document.getElementById('dataType').value;
+      const graphDataString = document.getElementById('graphData').value;
+
+      let edgesArray = [];
+      try {
+        const parsedData = JSON.parse(graphDataString);
+        if (dataType === 'edges') {
+          edgesArray = parsedData;
+        } else if (dataType === 'adjacency') {
+          // Assumes 1-based indexing for adjacency array, where array[0] is empty
+          for (let i = 1; i < parsedData.length; i++) {
+            for (let j = 0; j < parsedData[i].length; j++) {
+              const neighbor = parsedData[i][j];
+              if (graphType === 'undirectional') {
+                if (i < neighbor) {
+                  edgesArray.push([i, neighbor]);
+                }
+              } else {
+                edgesArray.push([i, neighbor]);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        alert('Invalid graph data format. Please use a valid JSON array.');
+        return;
+      }
+
+
+      // Convert edges / adjacency to vis.js nodes and edges
+      const nodes = [];
+      const nodeIds = new Set();
+      edgesArray.forEach(edge => { nodeIds.add(edge[0]); nodeIds.add(edge[1]); });
+      nodeIds.forEach(id => nodes.push({id, label: id.toString()}));
+
+      const edges = edgesArray.map(edge => {
+        return {from: edge[0], to: edge[1], arrows: graphType==="directional"?"to":""};
+      });
+
+      const container = document.getElementById('graph');
+      const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+      const options = {
+        physics: { stabilization: false },
+        layout: { improvedLayout: true, hierarchical: false },
+        interaction: { dragNodes: true, dragView: true, zoomView: true }
+      };
+      network = new vis.Network(container, data, options);
+    }
+
+    document.getElementById('drawBtn').onclick = drawGraph;
+    document.getElementById('resetBtn').onclick = () => {
+      if (network) {
+        network.stabilize();
+      }
+    };
+
+    // Initial draw
+    drawGraph();
+  </script>
+</body>
+</html>
