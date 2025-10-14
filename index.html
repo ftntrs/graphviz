@@ -33,8 +33,9 @@
 
     <br><br>
 
+    <button id="resetGraphBtn">Reset Graph</button>
     <button id="drawBtn">Draw Graph</button>
-    <button id="resetBtn">Reset Layout</button>
+    <button id="stabilizeBtn">Stabilize</button>
   </div>
   <div id="graph"></div>
 
@@ -44,6 +45,13 @@
     const edgesPlaceholder = '[[1,2,10],[1,3,5],[1,4,2],[2,4,3]]';
     const adjacencyPlaceholder = '[[], [2,3,4],[1,4],[1],[1,2]]';
     const graphDataTextArea = document.getElementById('graphData');
+    const graphTypeSelect = document.getElementById('graphType');
+    const dataTypeSelect = document.getElementById('dataType');
+
+    function resetGraph() {
+      graphDataTextArea.value = '[]';
+      drawGraph();
+    }
 
     document.getElementById('dataType').addEventListener('change', function() {
       if (this.value === 'edges') {
@@ -54,9 +62,9 @@
     });
 
     function drawGraph() {
-      const graphType = document.getElementById('graphType').value;
-      const dataType = document.getElementById('dataType').value;
-      const graphDataString = document.getElementById('graphData').value;
+      const graphType = graphTypeSelect.value;
+      const dataType = dataTypeSelect.value;
+      const graphDataString = graphDataTextArea.value;
 
       let edgesArray = [];
       try {
@@ -120,7 +128,8 @@
     }
 
     document.getElementById('drawBtn').onclick = drawGraph;
-    document.getElementById('resetBtn').onclick = () => {
+    document.getElementById('resetGraphBtn').onclick = resetGraph;
+    document.getElementById('stabilizeBtn').onclick = () => {
       if (network) {
         network.stabilize();
       }
